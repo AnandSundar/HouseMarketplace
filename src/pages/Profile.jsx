@@ -1,7 +1,7 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {getAuth, updateProfile} from 'firebase/auth'
 import {useNavigate} from 'react-router-dom'
-import {updateDoc, doc} from 'firebase/firestore'
+import {updateDoc, doc, collection, getDocs, query, where, deleteDoc, orderBy} from 'firebase/firestore'
 import {db} from '../firebase.config'
 import { Link } from 'react-router-dom'
 import {toast} from 'react-toastify'
@@ -22,6 +22,30 @@ function Profile() {
   const {name, email} = formData
 
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const fetchUserListings = async () => {
+      const listingRef = collection(db, 'listings')
+
+      const q= query(listingRef, where('userRef', '==', auth.currentUser.uid), orderBy('timestamp', 'desc'))
+
+      const querySnap = await getDocs(q)
+
+      const  listing = []
+
+      querySnap.forEach((doc) => {
+        return listings.push({
+          id: doc.id,
+          data: doc.data(),
+        })
+      })
+
+      setListings(listings)
+      setLoading(false)
+
+    }
+
+  }, [auth.currentUser.uid])
 
   const onLogout = () => {
     auth.signOut()
@@ -52,6 +76,15 @@ function Profile() {
       ...prevState,
       [e.target.id]: e.target.value
     }))
+  }
+
+  const onDelete = async (listingId) => {
+    if(window.confirm('Are you sure you want to delete?')) {
+      await deleteDoc(doc(db, 'listings', listingId))
+      const updatedListings = listings.filter((listing) => listing.id !== listingId)
+      setListings(updatedListings)
+      toast.success('Successfully deleted listing')
+    }
   }
 
   return <div className='profile'>
@@ -99,7 +132,7 @@ function Profile() {
                   key={listing.id}
                   listing={listing.data}
                   id={listing.id}
-                  // onDelete={() => onDelete(listing.id)}
+                  onDelete={() => onDelete(listing.id)}
                   // onEdit={() => onEdit(listing.id)}
                 />
               ))}
