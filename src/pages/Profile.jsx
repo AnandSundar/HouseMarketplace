@@ -3,11 +3,17 @@ import {getAuth, updateProfile} from 'firebase/auth'
 import {useNavigate} from 'react-router-dom'
 import {updateDoc, doc} from 'firebase/firestore'
 import {db} from '../firebase.config'
+import { Link } from 'react-router-dom'
 import {toast} from 'react-toastify'
+import ListingItem from '../components/ListingItem'
+import arrowRight from '../assets/svg/keyboardArrowRightIcon.svg'
+import homeIcon from '../assets/svg/homeIcon.svg'
 
 function Profile() {
   const auth = getAuth()
   const [changeDetails, setChangeDetails] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [listings, setListings] = useState(null)
   const [formData, setFormData] = useState({
     name: auth.currentUser.displayName,
     email: auth.currentUser.email,
@@ -77,6 +83,29 @@ function Profile() {
 
         </form>
       </div>
+
+      <Link to='/create-listing' className='createListing'>
+          <img src={homeIcon} alt='home' />
+          <p>Sell or rent your home</p>
+          <img src={arrowRight} alt='arrow right' />
+        </Link>
+
+        {!loading && listings?.length > 0 && (
+          <>
+            <p className='listingText'>Your Listings</p>
+            <ul className='listingsList'>
+              {listings.map((listing) => (
+                <ListingItem
+                  key={listing.id}
+                  listing={listing.data}
+                  id={listing.id}
+                  // onDelete={() => onDelete(listing.id)}
+                  // onEdit={() => onEdit(listing.id)}
+                />
+              ))}
+            </ul>
+          </>
+        )}
     </main>
   </div>
 }
